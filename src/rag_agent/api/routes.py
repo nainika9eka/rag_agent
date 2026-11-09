@@ -200,3 +200,20 @@ def _safe_count() -> int:
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=str(error),
         ) from error
+
+@router.get("/feedback/summary", tags=["agent"])
+def feedback_summary(feedback: FeedbackDep) -> dict:
+    """Summarize user feedback to monitor answer quality."""
+    entries = feedback.read_all()
+
+    helpful = sum(entry.get("useful") is True for entry in entries)
+    unhelpful = sum(entry.get("useful") is False for entry in entries)
+    total = helpful + unhelpful
+
+    return {
+        "total_feedback": total,
+        "helpful": helpful,
+        "unhelpful": unhelpful,
+        "helpfulness_rate": round(helpful / total * 100, 2) if total else 0.0,
+    }
+
